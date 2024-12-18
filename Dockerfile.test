@@ -1,0 +1,15 @@
+# Dockerfile.test for testing the application container.
+FROM python:3.12
+
+WORKDIR /app
+ENV PYTHONPATH=/app
+
+RUN pip install pipenv
+
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --deploy --ignore-pipfile
+
+COPY . .
+
+# Set the entrypoint to run pytest
+CMD ["pipenv", "run", "pytest", "--maxfail=1", "--disable-warnings", "-v"]

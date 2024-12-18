@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: gnostic123
+      POSTGRES_DB: gnostic_cloud
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - gnostic_network
+  
+  # postgres_mail_db:
+  #   image: postgres:13
+  #   container_name: postgres_mail_db
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: gnostic123
+  #     POSTGRES_DB: gnostic_mail
+  #   volumes:
+  #     - postgres_mail_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5435:5432"
+  #   networks:
+  #     - gnostic_network
+
+  iam_service:
+    build: .
+    container_name: iam_service
+    command: pipenv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+      - ./profile_pictures:/app/profile_pictures
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_db
+    environment:
+      - SQLALCHEMY_DATABASE_URL=postgresql://postgres:gnostic123@postgres_db:5432/gnostic_cloud
+    networks:
+      - gnostic_network
+  
+  # mail_service:
+  #   build: .
+  #   container_name: mail_service
+  #   command: pipenv run uvicorn mail.main:app --host 0.0.0.0 --port 8001 --reload
+  #   volumes:
+  #     - .:/app
+  #   ports:
+  #     - "8001:8001"
+  #   depends_on:
+  #     - postgres_mail_db
+  #   environment:
+  #     - SQLALCHEMY_DATABASE_URL=postgresql://postgres:gnostic123@postgres_mail_db:5432/gnostic_mail
+  #   networks:
+  #     - gnostic_network
+
+networks:
+  gnostic_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  # postgres_mail_data:
+  #   driver: local
+  profile-pictures:
